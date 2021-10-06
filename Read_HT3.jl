@@ -1,55 +1,58 @@
 using Printf
 
-RecNum::Int = 0
-cnt_ph::Int = 0
-cnt_ov::Int = 0
-cnt_ma::Int = 0
+RecNum = 0
+cnt_ph = 0
+cnt_ov = 0
+cnt_ma = 0
 
 ## Got Photon
 #    TimeTag: Raw TimeTag from Record * Globalresolution = Real Time arrival of Photon
 #    DTime: Arrival time of Photon after last Sync event (T3 only) DTime * Resolution = Real time arrival of Photon after last Sync event
 #    Channel: Channel the Photon arrived (0 = Sync channel for T2 measurements)
-function GotPhoton(TimeTag, Channel, DTime)
+function GotPhoton(TimeTag, Channel, DTime, cnt_ph)
     cnt_ph += 1
 
     # Edited: formatting changed by PK
-    @printf(
-        fpout,
+    #=@printf(
+        #fpout,
         "\n#10i CHN #i #18.0f (#0.1f ns) #ich",
-        RecNum,
+        #RecNum,
         Channel,
         TimeTag,
         (TimeTag * Resolution * 1e9),
         DTime
-    )
+    )=#
 end
 
 ## Got Marker
 #    TimeTag: Raw TimeTag from Record * Globalresolution = Real Time arrival of Photon
 #    Markers: Bitfield of arrived Markers, different markers can arrive at same time (same record)
-function GotMarker(TimeTag, Markers)
+function GotMarker(TimeTag, Markers, cnt_ma)
     cnt_ma += 1
     # Edited: formatting changed by PK
-    @printf(
-        fpout,
+    #=@printf(
+        #fpout,
         "\n#10i MAR #i #18.0f (#0.1f ns)",
-        RecNum,
+        #RecNum,
         Markers,
         TimeTag,
         (TimeTag * Resolution * 1e9)
-    )
+    )=#
 end
 
 ## Got Overflow
 #  Count: Some TCSPC provide Overflow compression = if no Photons between overflow you get one record for multiple Overflows
-function GotOverflow(Count)
+function GotOverflow(Count, cnt_ov)
     cnt_ov += Count
     # Edited: formatting changed by PK
-    @printf(fpout, "\n#10i OFL * #i", RecNum, Count)
+    #=@printf(#fpout, 
+    "\n#10i OFL * #i", 
+    #RecNum, 
+    Count)=#
 end
 
 ## Read HydraHarp/TimeHarp260 T3
-function ReadHT3(Version)
+function ReadHT3(Version, cnt_ph, cnt_ov, cnt_ma)
     OverflowCorrection = 0
     T3WRAPAROUND = 1024
 
@@ -59,20 +62,20 @@ function ReadHT3(Version)
         #   +-------------------------------+  +-------------------------------+
         #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        nsync = &(T3Record, 1023)       # the lowest 10 bits:
+        nsync = T3Record & 1023       # the lowest 10 bits:
         #   +-------------------------------+  +-------------------------------+
         #   | | | | | | | | | | | | | | | | |  | | | | | | |x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        dtime = &(>>>(T3Record, 10), 32767)   # the next 15 bits:
+        dtime = (T3Record >>> 10) & 32767   # the next 15 bits:
         #   the dtime unit depends on "Resolution" that can be obtained from header
         #   +-------------------------------+  +-------------------------------+
         #   | | | | | | | |x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x| | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
-        channel = &(>>>(T3Record, 25), 63)   # the next 6 bits:
+        channel = (T3Record >>> 25) & 63   # the next 6 bits:
         #   +-------------------------------+  +-------------------------------+
         #   | |x|x|x|x|x|x| | | | | | | | | |  | | | | | | | | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
-        special = &(>>>(T3Record, 31), 1)   # the last bit:
+        special = (T3Record >>> 31) & 1   # the last bit:
         #   +-------------------------------+  +-------------------------------+
         #   |x| | | | | | | | | | | | | | | |  | | | | | | | | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
@@ -80,18 +83,18 @@ function ReadHT3(Version)
             true_nSync = OverflowCorrection + nsync
             #  one nsync time unit equals to "syncperiod" which can be
             #  calculated from "SyncRate"
-            GotPhoton(true_nSync, channel, dtime)
+            GotPhoton(true_nSync, channel, dtime, cnt_ph)
         elseif channel == 63  # overflow of nsync occured
             if (nsync == 0) || (Version == 1) # if nsync is zero it is an old style single oferflow or old Version
                 OverflowCorrection = OverflowCorrection + T3WRAPAROUND
-                GotOverflow(1)
+                GotOverflow(1, cnt_ov)
             else         # otherwise nsync indicates the number of overflows - THIS IS NEW IN FORMAT V2.0
                 OverflowCorrection = OverflowCorrection + T3WRAPAROUND * nsync
-                GotOverflow(nsync)
+                GotOverflow(nsync, cnt_ov)
             end
         elseif (channel >= 1) && (channel <= 15)  # these are markers
             true_nSync = OverflowCorrection + nsync
-            GotMarker(true_nSync, channel)
+            GotMarker(true_nSync, channel, cnt_ma)
         end
     end
 end
@@ -251,7 +254,12 @@ StopReason = read(fid, Int32)
 
 ImgHdrSize = read(fid, Int32)
 
-nRecords = read(fid, UInt64)
+test1 = read(fid, 8)
+#test2 = read(fid, Int32)
+
+# nRecords = read(fid, UInt64) # ! This line is problematic, it seems that only the last 32 bits are useful.
+nRecords = -(mark(fid) - position(seekend(fid))) / 4
+isinteger(nRecords) || @warn "Number of records is not an integer!"
 
 # Special header for imaging. How many of the following ImgHdr array elements
 # are actually present in the file is indicated by ImgHdrSize above.
@@ -276,5 +284,5 @@ syncperiod = 1E9 / SyncRate      # in nanoseconds
 OverflowCorrection = 0
 T3WRAPAROUND = 1024
 
-ReadHT3(Version)
+ReadHT3(Version, cnt_ph, cnt_ov, cnt_ma)
 
