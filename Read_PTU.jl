@@ -35,18 +35,18 @@ const tyAnsiString = 0x4001FFFF
 const tyWideString = 0x4002FFFF
 const tyBinaryBlob = 0xFFFFFFFF
 # RecordTypes
-const rtPicoHarpT3 = 0x00010303 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $03 (PicoHarp)
-const rtPicoHarpT2 = 0x00010203 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $03 (PicoHarp)
-const rtHydraHarpT3 = 0x00010304 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $04 (HydraHarp)
-const rtHydraHarpT2 = 0x00010204 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $04 (HydraHarp)
-const rtHydraHarp2T3 = 0x01010304 # (SubID = $01 ,RecFmt: $01) (V2), T-Mode: $03 (T3), HW: $04 (HydraHarp)
-const rtHydraHarp2T2 = 0x01010204 # (SubID = $01 ,RecFmt: $01) (V2), T-Mode: $02 (T2), HW: $04 (HydraHarp)
-const rtTimeHarp260NT3 = 0x00010305 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $05 (TimeHarp260N)
-const rtTimeHarp260NT2 = 0x00010205 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $05 (TimeHarp260N)
-const rtTimeHarp260PT3 = 0x00010306 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $06 (TimeHarp260P)
-const rtTimeHarp260PT2 = 0x00010206 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $06 (TimeHarp260P)
-const rtMultiHarpT3 = 0x00010307 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $07 (MultiHarp)
-const rtMultiHarpT2 = 0x00010207 # (SubID = $00 ,RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $07 (MultiHarp)
+const rtPicoHarpT3 = 0x00010303 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $03 (PicoHarp)
+const rtPicoHarpT2 = 0x00010203 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $03 (PicoHarp)
+const rtHydraHarpT3 = 0x00010304 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $04 (HydraHarp)
+const rtHydraHarpT2 = 0x00010204 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $04 (HydraHarp)
+const rtHydraHarp2T3 = 0x01010304 # (SubID = $01, RecFmt: $01) (V2), T-Mode: $03 (T3), HW: $04 (HydraHarp)
+const rtHydraHarp2T2 = 0x01010204 # (SubID = $01, RecFmt: $01) (V2), T-Mode: $02 (T2), HW: $04 (HydraHarp)
+const rtTimeHarp260NT3 = 0x00010305 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $05 (TimeHarp260N)
+const rtTimeHarp260NT2 = 0x00010205 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $05 (TimeHarp260N)
+const rtTimeHarp260PT3 = 0x00010306 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $06 (TimeHarp260P)
+const rtTimeHarp260PT2 = 0x00010206 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $06 (TimeHarp260P)
+const rtMultiHarpT3 = 0x00010307 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $03 (T3), HW: $07 (MultiHarp)
+const rtMultiHarpT2 = 0x00010207 # (SubID = $00, RecFmt: $01) (V1), T-Mode: $02 (T2), HW: $07 (MultiHarp)
 
 RecNum::Int = 0
 cnt_ph::Int = 0
@@ -58,12 +58,13 @@ cnt_ma::Int = 0
 #    DTime: Arrival time of Photon after last Sync event (T3 only) DTime * Resolution = Real time arrival of Photon after last Sync event
 #    Channel: Channel the Photon arrived (0 = Sync channel for T2 measurements)
 function GotPhoton(TimeTag, Channel, DTime)
+    global RecNum, cnt_ph
     cnt_ph += 1
     if (isT2)
         # Edited: formatting changed by PK
         @printf(
             fpout,
-            "\n#10i CHN #i #18.0f (#0.1f ps)",
+            "\n%10i CHN %i %18.0f (%0.1f ps)",
             RecNum,
             Channel,
             TimeTag,
@@ -73,7 +74,7 @@ function GotPhoton(TimeTag, Channel, DTime)
         # Edited: formatting changed by PK
         @printf(
             fpout,
-            "\n#10i CHN #i #18.0f (#0.1f ns) #ich",
+            "\n%10i CHN %i %18.0f (%0.1f ns) %ich",
             RecNum,
             Channel,
             TimeTag,
@@ -87,11 +88,12 @@ end
 #    TimeTag: Raw TimeTag from Record * Globalresolution = Real Time arrival of Photon
 #    Markers: Bitfield of arrived Markers, different markers can arrive at same time (same record)
 function GotMarker(TimeTag, Markers)
+    global RecNum, cnt_ma
     cnt_ma += 1
     # Edited: formatting changed by PK
     @printf(
         fpout,
-        "\n#10i MAR #i #18.0f (#0.1f ns)",
+        "\n%10i MAR %i %18.0f (%0.1f ns)",
         RecNum,
         Markers,
         TimeTag,
@@ -102,15 +104,17 @@ end
 ## Got Overflow
 #  Count: Some TCSPC provide Overflow compression = if no Photons between overflow you get one record for multiple Overflows
 function GotOverflow(Count)
+    global RecNum, cnt_ov
     cnt_ov += Count
     # Edited: formatting changed by PK
-    @printf(fpout, "\n#10i OFL * #i", RecNum, Count)
+    @printf(fpout, "\n%10i OFL * %i", RecNum, Count)
 end
 
 ## Decoder functions
 
 ## Read PicoHarp T3
 function ReadPT3()
+    global RecNum
     ofltime = 0
     WRAPAROUND = 65536
 
@@ -151,6 +155,7 @@ end
 
 ## Read PicoHarp T2
 function ReadPT2()
+    global RecNum
     ofltime = 0
     WRAPAROUND = 210698240
 
@@ -182,6 +187,7 @@ end
 
 ## Read HydraHarp/TimeHarp260 T3
 function ReadHT3(Version)
+    global RecNum
     OverflowCorrection = 0
     T3WRAPAROUND = 1024
 
@@ -230,6 +236,7 @@ end
 
 ## Read HydraHarp/TimeHarp260 T2
 function ReadHT2(Version)
+    global RecNum
     OverflowCorrection = 0
     T2WRAPAROUND_V1 = 33552000
     T2WRAPAROUND_V2 = 33554432 # = 2^25  IMPORTANT! THIS IS NEW IN FORMAT V2.0
@@ -286,7 +293,7 @@ println("")
 Magic = strip(String(read(fid, 8)), '\0')
 Magic == "PQTTTR" || error("Magic invalid, this is not an PTU file.")
 Version = strip(String(read(fid, 8)), '\0')
-@printf("Tag Version: #s\n", Version)
+@printf("Tag Version: %s\n", Version)
 
 # Instead of metaprogramming, dictionary is used here.
 # Or it can be done via eval(Meta.parse("..."))
@@ -303,7 +310,7 @@ while true
     else
         EvalName = TagIdent
     end
-    @printf("\n   #-40s", EvalName)
+    @printf("\n   %-40s", EvalName)
     # check Typ of Header
     if TagTyp == tyEmpty8
         read(fid, Int)
@@ -320,19 +327,19 @@ while true
         end
     elseif TagTyp == tyInt8
         TagInt = read(fid, Int)
-        @printf("#d", TagInt)
+        @printf("%d", TagInt)
         merge!(tagdict, Dict(EvalName => TagInt))
     elseif TagTyp == tyBitSet64
         TagInt = read(fid, Int)
-        @printf("#X", TagInt)
+        @printf("%X", TagInt)
         merge!(tagdict, Dict(EvalName => TagInt))
     elseif TagTyp == tyColor8
         TagInt = read(fid, Int)
-        @printf("#X", TagInt)
+        @printf("%X", TagInt)
         merge!(tagdict, Dict(EvalName => TagInt))
     elseif TagTyp == tyFloat8
         TagFloat = read(fid, Float64)
-        @printf("#e", TagFloat)
+        @printf("%e", TagFloat)
         merge!(tagdict, Dict(EvalName => TagFloat))
     elseif TagTyp == tyFloat8Array
         TagInt = read(fid, Int)
@@ -342,20 +349,20 @@ while true
         TagFloat = read(fid, Float64)
         tagtime = Int(round((TagFloat - 25569) * 86400))
         tagtime = Dates.unix2datetime(tagtime) # TODO better datetime format
-        @printf(string(tagtime))
+        @printf("%s", string(tagtime))
         merge!(tagdict, Dict(EvalName => tagtime))
     elseif TagTyp == tyAnsiString
         TagInt = read(fid, Int)
         TagString = strip(String(read(fid, TagInt)), '\0')
-        @printf("#s", TagString)
-        TagIdx > -1 && EvalName = TagIdent * "{" * string(TagIdx + 1) * "}"
+        @printf("%s", TagString)
+        TagIdx > -1 && (EvalName = TagIdent * "{" * string(TagIdx + 1) * "}")
         merge!(tagdict, Dict(EvalName => TagString))
     elseif TagTyp == tyWideString
         # Read and remove the 0"s
         TagInt = read(fid, Int)
         TagString = strip(String(read(fid, TagInt)), '\0')
-        @printf("#s", TagString)
-        TagIdx > -1 && EvalName = TagIdent * "{" * string(TagIdx + 1) * "}"
+        @printf("%s", TagString)
+        TagIdx > -1 && (EvalName = TagIdent * "{" * string(TagIdx + 1) * "}")
         merge!(tagdict, Dict(EvalName => TagString))
     elseif TagTyp == tyBinaryBlob
         TagInt = read(fid, Int)
@@ -409,7 +416,7 @@ elseif tagdict["TTResultFormat_TTTRRecType"] == rtMultiHarpT2
 else
     error("Illegal RecordType!")
 end
-@printf("\nWriting data to #s", outfile)
+@printf("\nWriting data to %s", outfile)
 println("\nThis may take a while...")
 # write Header
 if (isT2)
@@ -451,4 +458,4 @@ close(fid)
 close(fpout)
 println("Ready!  \n")
 println("\nStatistics obtained from the data:")
-@printf("\n#i photons, #i overflows, #i markers.\n", cnt_ph, cnt_ov, cnt_ma)
+@printf("\n%i photons, %i overflows, %i markers.\n", cnt_ph, cnt_ov, cnt_ma)
