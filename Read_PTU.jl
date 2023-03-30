@@ -120,20 +120,20 @@ function ReadPT3()
         #   +-------------------------------+  +-------------------------------+
         #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        nsync = &(T3Record, 65535)       # the lowest 16 bits:
+        nsync = (&)(T3Record, 65535)       # the lowest 16 bits:
         #   +-------------------------------+  +-------------------------------+
         #   | | | | | | | | | | | | | | | | |  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        chan = &(>>>(T3Record, 28), 15)   # the upper 4 bits:
+        chan = (&)(>>>(T3Record, 28), 15)   # the upper 4 bits:
         #   +-------------------------------+  +-------------------------------+
         #   |x|x|x|x| | | | | | | | | | | | |  | | | | | | | | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
         truensync = ofltime + nsync
         if (chan >= 1) && (chan <= 4)
-            dtime = &(>>>(T3Record, 16), 4095)
+            dtime = (&)(>>>(T3Record, 16), 4095)
             GotPhoton(truensync, chan, dtime)  # regular count at Ch1, Rt_Ch1 - Rt_Ch4 when the router is enabled
         elseif chan == 15 # special record
-            markers = &(>>>(T3Record, 16), 15) # where these four bits are markers:
+            markers = (&)(>>>(T3Record, 16), 15) # where these four bits are markers:
             #   +-------------------------------+  +-------------------------------+
             #   | | | | | | | | | | | | |x|x|x|x|  | | | | | | | | | | | | | | | | |
             #   +-------------------------------+  +-------------------------------+
@@ -157,13 +157,13 @@ function ReadPT2()
     for i = 1:tagdict["TTResult_NumberOfRecords"]
         RecNum = i
         T2Record = read(fid, UInt32)
-        T2time = &(T2Record, 268435455)             #the lowest 28 bits
-        chan = &(>>>(T2Record, 28), 15)      #the next 4 bits
+        T2time = (&)(T2Record, 268435455)             #the lowest 28 bits
+        chan = (&)(>>>(T2Record, 28), 15)      #the next 4 bits
         timetag = T2time + ofltime
         if (chan >= 0) && (chan <= 4)
             GotPhoton(timetag, chan, 0)
         elseif chan == 15
-            markers = &(T2Record, 15)  # where the lowest 4 bits are marker bits
+            markers = (&)(T2Record, 15)  # where the lowest 4 bits are marker bits
             if markers == 0                   # then this is an overflow record
                 ofltime = ofltime + WRAPAROUND # and we unwrap the time tag overflow
                 GotOverflow(1)
@@ -191,20 +191,20 @@ function ReadHT3(Version)
         #   +-------------------------------+  +-------------------------------+
         #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        nsync = &(T3Record, 1023)       # the lowest 10 bits:
+        nsync = (&)(T3Record, 1023)       # the lowest 10 bits:
         #   +-------------------------------+  +-------------------------------+
         #   | | | | | | | | | | | | | | | | |  | | | | | | |x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        dtime = &(>>>(T3Record, 10), 32767)   # the next 15 bits:
+        dtime = (&)(>>>(T3Record, 10), 32767)   # the next 15 bits:
         #   the dtime unit depends on "Resolution" that can be obtained from header
         #   +-------------------------------+  +-------------------------------+
         #   | | | | | | | |x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x| | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
-        channel = &(>>>(T3Record, 25), 63)   # the next 6 bits:
+        channel = (&)(>>>(T3Record, 25), 63)   # the next 6 bits:
         #   +-------------------------------+  +-------------------------------+
         #   | |x|x|x|x|x|x| | | | | | | | | |  | | | | | | | | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
-        special = &(>>>(T3Record, 31), 1)   # the last bit:
+        special = (&)(>>>(T3Record, 31), 1)   # the last bit:
         #   +-------------------------------+  +-------------------------------+
         #   |x| | | | | | | | | | | | | | | |  | | | | | | | | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
@@ -240,15 +240,15 @@ function ReadHT2(Version)
         #   +-------------------------------+  +-------------------------------+
         #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        dtime = &(T2Record, 33554431)   # the last 25 bits:
+        dtime = (&)(T2Record, 33554431)   # the last 25 bits:
         #   +-------------------------------+  +-------------------------------+
         #   | | | | | | | |x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|
         #   +-------------------------------+  +-------------------------------+
-        channel = &(>>>(T2Record, 25), 63)   # the next 6 bits:
+        channel = (&)(>>>(T2Record, 25), 63)   # the next 6 bits:
         #   +-------------------------------+  +-------------------------------+
         #   | |x|x|x|x|x|x| | | | | | | | | |  | | | | | | | | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
-        special = &(>>>(T2Record, 31), 1)   # the last bit:
+        special = (&)(>>>(T2Record, 31), 1)   # the last bit:
         #   +-------------------------------+  +-------------------------------+
         #   |x| | | | | | | | | | | | | | | |  | | | | | | | | | | | | | | | | |
         #   +-------------------------------+  +-------------------------------+
