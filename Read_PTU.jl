@@ -439,16 +439,12 @@ elseif tagdict["TTResultFormat_TTTRRecType"] == rtHydraHarpT3
 elseif tagdict["TTResultFormat_TTTRRecType"] == rtHydraHarpT2
     isT2 = true
     ReadHT2(1)
-elseif tagdict["TTResultFormat_TTTRRecType"] == rtMultiHarpT3 ||
-       tagdict["TTResultFormat_TTTRRecType"] == rtHydraHarp2T3 ||
-       tagdict["TTResultFormat_TTTRRecType"] == rtTimeHarp260NT3 ||
-       tagdict["TTResultFormat_TTTRRecType"] == rtTimeHarp260PT3
+elseif tagdict["TTResultFormat_TTTRRecType"] in
+       [rtMultiHarpT3, rtHydraHarp2T3, rtTimeHarp260NT3, rtTimeHarp260PT3]
     isT2 = false
     ReadHT3(2)
-elseif tagdict["TTResultFormat_TTTRRecType"] == rtMultiHarpT2 ||
-       tagdict["TTResultFormat_TTTRRecType"] == rtHydraHarp2T2 ||
-       tagdict["TTResultFormat_TTTRRecType"] == rtTimeHarp260NT2 ||
-       tagdict["TTResultFormat_TTTRRecType"] == rtTimeHarp260PT2
+elseif tagdict["TTResultFormat_TTTRRecType"] in
+       [rtMultiHarpT2, rtHydraHarp2T2, rtTimeHarp260NT2, rtTimeHarp260PT2]
     isT2 = true
     ReadHT2(2)
 else
@@ -456,6 +452,6 @@ else
 end
 close(fid)
 close(fpout)
-println("Ready!  \n")
+println("Ready!\n")
 println("\nStatistics obtained from the data:")
 @printf("\n%i photons, %i overflows, %i markers.\n", cnt_ph, cnt_ov, cnt_ma)
